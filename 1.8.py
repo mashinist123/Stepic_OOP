@@ -20,17 +20,6 @@ class CardCheck:
                 return True
     @classmethod
     def check_name(cls, name):
+        if name.count(' ') > 1:
+            return False
         return set(x for x in name.replace(' ', '')) <= set(x for x in cls.CHARS_FOR_NAME)
-
-
-
-is_number = CardCheck.check_card_number("1234-5678-9012-0000")
-is_name = CardCheck.check_name("SERGEI BALAKIREV")
-print(is_number, is_name)
-print(CardCheck())
-
-f = '1234556'
-print(type(digits))
-print(set(f.replace('5', '')))
-
-print(CardCheck.CHARS_FOR_NAME)
