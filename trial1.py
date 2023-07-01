@@ -8,10 +8,8 @@ class Server:
         self.link = None
 
     def send_data(self, data):
-        if data.ip in self.link.buffer:
-            self.link.buffer[data.ip] += ' ' + data.data
-        else:
-            self.link.buffer[data.ip] = data.data
+        self.link.buffer[data.ip] = self.link.buffer.get(data.ip, []) + [data.data]
+
 
     def get_data(self):
         s = []
@@ -39,7 +37,7 @@ class Router:
     def send_data(self):
         while len(self.buffer):
             i = list(self.buffer.keys())[0]
-            self.all_connections[i].buffer.append(self.buffer[i])
+            self.all_connections[i].buffer.extend(self.buffer[i])
             del self.buffer[i]
 
 
@@ -77,6 +75,10 @@ class Data:
 # print(router.buffer)
 
 
+assert hasattr(Router, 'link') and hasattr(Router, 'unlink') and hasattr(Router,
+                                                                         'send_data'), "в классе Router присутсвутю не все методы, указанные в задании"
+assert hasattr(Server, 'send_data') and hasattr(Server, 'get_data') and hasattr(Server,
+                                                                                'get_ip'), "в классе Server присутсвутю не все методы, указанные в задании"
 
 router = Router()
 sv_from = Server()
@@ -88,26 +90,27 @@ router.link(Server())
 sv_to = Server()
 router.link(sv_to)
 sv_from.send_data(Data("Hello", sv_to.get_ip()))
-sv_from2.send_data(Data("HelloP", sv_to.get_ip()))
+sv_from2.send_data(Data("Hello", sv_to.get_ip()))
 sv_to.send_data(Data("Hi", sv_from.get_ip()))
 router.send_data()
-print('Outpute:', sv_to.buffer)
 msg_lst_from = sv_from.get_data()
 msg_lst_to = sv_to.get_data()
-print(router.buffer)
+print(msg_lst_from[0])
+print(len(msg_lst_to))
+print(msg_lst_to[0])
+assert len(router.buffer) == 0, "после отправки сообщений буфер в роутере должен очищаться"
+assert len(sv_from.buffer) == 0, "после получения сообщений буфер сервера должен очищаться"
 
-print(msg_lst_from, msg_lst_to)
-print(sv_to.buffer)
+assert len(msg_lst_to) == 2, "метод get_data вернул неверное число пакетов"
 
-print('other task!!!!!11')
-rb = {1:'sd', 2:'12d', 3:'asdfsd'}
+assert msg_lst_from[0].data == "Hi" and msg_lst_to[
+    0].data == "Hello", "данные не прошли по сети, классы не функционируют должным образом"
 
-print(rb)
+assert hasattr(router, 'buffer') and hasattr(sv_to,
+                                             'buffer'), "в объектах классов Router и/или Server отсутствует локальный атрибут buffer"
 
-# i = rb.keys()
-#
-# while len(rb):
-#     i = list(rb.keys())[0]
-#     print(rb[i])
-#     del rb[i]
-#     print(rb)
+router.unlink(sv_to)
+sv_from.send_data(Data("Hello", sv_to.get_ip()))
+router.send_data()
+msg_lst_to = sv_to.get_data()
+assert msg_lst_to == [], "метод get_data() вернул неверные данные, возможно, неправильно работает метод unlink()"
